@@ -16,6 +16,7 @@ include $(THEOS_MAKE_PATH)/tweak.mk
 BUNDLE_NAME = NetSpeedStatusPrefs
 NetSpeedStatusPrefs_FILES = Preferences/NSRootListController.m
 NetSpeedStatusPrefs_FRAMEWORKS = UIKit
+NetSpeedStatusPrefs_LDFLAGS = -undefined dynamic_lookup
 NetSpeedStatusPrefs_INSTALL_PATH = /Library/PreferenceBundles
 NetSpeedStatusPrefs_RESOURCE_FILES = Root.plist
 NetSpeedStatusPrefs_CFLAGS = -fobjc-arc
