@@ -1,4 +1,4 @@
-# NetSpeedStatus
+# 网速显示
 
 状态栏上下行网速 tweak，支持 RootHide 环境。默认把小号、两行网速放在时间后面，适配 iPhone 15 Pro 灵动岛左侧空间。
 
@@ -10,13 +10,13 @@
 https://blog.m9d2.cn/repo/
 ```
 
-安装 `NetSpeedStatus` 后，在 RootHide Bootstrap 的 App List 中确认已启用 SpringBoard 注入，然后重启 SpringBoard。
+安装“网速显示”后，在 RootHide Bootstrap 的 App List 中确认已启用 SpringBoard 注入，然后重启 SpringBoard。
 
 也可以从 GitHub Actions 下载 `NetSpeedStatus-roothide-deb` 工件后手动安装。
 
 ## 设置
 
-打开系统设置中的 **NetSpeedStatus**，可配置：
+打开系统设置中的 **网速显示**，可配置：
 
 - 启用或关闭状态栏网速
 - 分别显示下载速度和上传速度

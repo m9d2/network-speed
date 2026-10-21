@@ -11,21 +11,21 @@
 		<dict>
 			<key>cell</key><string>PSToggleSwitchSpecifier</string>
 			<key>default</key><true/>
-			<key>defaults</key><string>com.m9d2.netspeedstatus</string>
+			<key>defaults</key><string>com.m9d2.wangsu</string>
 			<key>key</key><string>enabled</string>
 			<key>label</key><string>启用网速显示</string>
 		</dict>
 		<dict>
 			<key>cell</key><string>PSToggleSwitchSpecifier</string>
 			<key>default</key><true/>
-			<key>defaults</key><string>com.m9d2.netspeedstatus</string>
+			<key>defaults</key><string>com.m9d2.wangsu</string>
 			<key>key</key><string>showDownload</string>
 			<key>label</key><string>显示下载速度</string>
 		</dict>
 		<dict>
 			<key>cell</key><string>PSToggleSwitchSpecifier</string>
 			<key>default</key><true/>
-			<key>defaults</key><string>com.m9d2.netspeedstatus</string>
+			<key>defaults</key><string>com.m9d2.wangsu</string>
 			<key>key</key><string>showUpload</string>
 			<key>label</key><string>显示上传速度</string>
 		</dict>
@@ -36,7 +36,7 @@
 		<dict>
 			<key>cell</key><string>PSSliderCell</string>
 			<key>default</key><real>8</real>
-			<key>defaults</key><string>com.m9d2.netspeedstatus</string>
+			<key>defaults</key><string>com.m9d2.wangsu</string>
 			<key>key</key><string>fontSize</string>
 			<key>label</key><string>字体大小</string>
 			<key>min</key><real>6</real>
@@ -44,6 +44,6 @@
 			<key>showValue</key><true/>
 		</dict>
 	</array>
-	<key>title</key><string>NetSpeedStatus</string>
+	<key>title</key><string>网速显示</string>
 </dict>
 </plist>

@@ -59,19 +59,19 @@ def main() -> None:
             compressed.write(index)
     (site / ".nojekyll").touch()
     (site / "index.html").write_text(
-        "<!doctype html><html><head><meta charset=\"utf-8\"><title>NetSpeedStatus Repo</title></head>"
-        "<body><h1>NetSpeedStatus</h1><p>Add this source to Sileo or Zebra:</p>"
+        "<!doctype html><html><head><meta charset=\"utf-8\"><title>网速显示 Repo</title></head>"
+        "<body><h1>网速显示</h1><p>Add this source to Sileo or Zebra:</p>"
         "<code>https://blog.m9d2.cn/repo/</code></body></html>\n",
         encoding="utf-8",
     )
     release_fields = [
         "Origin: m9d2",
-        "Label: NetSpeedStatus",
+        "Label: 网速显示",
         "Suite: stable",
         "Codename: stable",
         "Architectures: iphoneos-arm64e",
         "Components: main",
-        "Description: NetSpeedStatus RootHide package repository",
+        "Description: m9d2 RootHide package repository",
     ]
     for algorithm in ("MD5", "SHA1", "SHA256"):
         entries = []

@@ -11,8 +11,8 @@ static NSHashTable<UILabel *> *gNetSpeedLabels;
 static dispatch_source_t gSampleTimer;
 static uint64_t gPreviousReceived, gPreviousSent, gPreviousTimestamp;
 static double gSmoothedDownload, gSmoothedUpload;
-static NSString * const kNetSpeedPreferencesDomain = @"com.m9d2.netspeedstatus";
-static NSString * const kNetSpeedPreferencesChangedNotification = @"com.m9d2.netspeedstatus/preferences.changed";
+static NSString * const kNetSpeedPreferencesDomain = @"com.m9d2.wangsu";
+static NSString * const kNetSpeedPreferencesChangedNotification = @"com.m9d2.wangsu/preferences.changed";
 static BOOL gNetSpeedEnabled = YES;
 static BOOL gShowDownload = YES;
 static BOOL gShowUpload = YES;
@@ -22,6 +22,13 @@ static void NetSpeedApplyLayout(UILabel *label);
 
 static void NetSpeedLoadPreferences(void) {
 	NSUserDefaults *preferences = [[NSUserDefaults alloc] initWithSuiteName:kNetSpeedPreferencesDomain];
+	NSUserDefaults *previousPreferences = [[NSUserDefaults alloc] initWithSuiteName:@"com.m9d2.netspeedstatus"];
+	for (NSString *key in @[@"enabled", @"showDownload", @"showUpload", @"fontSize"]) {
+		if ([preferences objectForKey:key] == nil) {
+			id oldValue = [previousPreferences objectForKey:key];
+			if (oldValue != nil) [preferences setObject:oldValue forKey:key];
+		}
+	}
 	id enabled = [preferences objectForKey:@"enabled"];
 	id showDownload = [preferences objectForKey:@"showDownload"];
 	id showUpload = [preferences objectForKey:@"showUpload"];
@@ -171,7 +178,7 @@ static void NetSpeedPreferencesChanged(CFNotificationCenterRef center, void *obs
 
 static void NetSpeedStartSampling(void) {
 	if (gSampleTimer != nil) return;
-	dispatch_queue_t queue = dispatch_queue_create("com.example.netspeedstatus.sampling", DISPATCH_QUEUE_SERIAL);
+	dispatch_queue_t queue = dispatch_queue_create("com.m9d2.wangsu.sampling", DISPATCH_QUEUE_SERIAL);
 	gSampleTimer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, queue);
 	dispatch_source_set_timer(gSampleTimer, dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC), NSEC_PER_SEC, 100 * NSEC_PER_MSEC);
 	dispatch_source_set_event_handler(gSampleTimer, ^{

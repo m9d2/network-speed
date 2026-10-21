@@ -27,7 +27,7 @@ jobs:
           plutil -lint NetSpeedStatus.plist Root.plist
           ruby -e 'require "yaml"; YAML.load_file(".github/workflows/ci.yml")'
           grep -Eq '^THEOS_PACKAGE_SCHEME = roothide$' Makefile
-          grep -Eq '^Package: com\.m9d2\.netspeedstatus$' control
+          grep -Eq '^Package: com\.m9d2\.wangsu$' control
           grep -Eq '^Architecture: iphoneos-arm64e$' control
           grep -q 'com.apple.springboard' NetSpeedStatus.plist
 

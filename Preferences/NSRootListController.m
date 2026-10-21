@@ -2,8 +2,8 @@
 #import <Preferences/PSSpecifier.h>
 #import <CoreFoundation/CoreFoundation.h>
 
-static NSString * const kNetSpeedPreferencesDomain = @"com.m9d2.netspeedstatus";
-static NSString * const kNetSpeedPreferencesChangedNotification = @"com.m9d2.netspeedstatus/preferences.changed";
+static NSString * const kNetSpeedPreferencesDomain = @"com.m9d2.wangsu";
+static NSString * const kNetSpeedPreferencesChangedNotification = @"com.m9d2.wangsu/preferences.changed";
 
 @interface NSRootListController : PSListController
 @end
