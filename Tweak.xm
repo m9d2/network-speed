@@ -4,11 +4,34 @@
 #import <net/if_var.h>
 #import <dispatch/dispatch.h>
 #import <math.h>
+#import <objc/runtime.h>
+#import <CoreFoundation/CoreFoundation.h>
 
 static NSHashTable<UILabel *> *gNetSpeedLabels;
 static dispatch_source_t gSampleTimer;
 static uint64_t gPreviousReceived, gPreviousSent, gPreviousTimestamp;
 static double gSmoothedDownload, gSmoothedUpload;
+static NSString * const kNetSpeedPreferencesDomain = @"com.m9d2.netspeedstatus";
+static NSString * const kNetSpeedPreferencesChangedNotification = @"com.m9d2.netspeedstatus/preferences.changed";
+static BOOL gNetSpeedEnabled = YES;
+static BOOL gShowDownload = YES;
+static BOOL gShowUpload = YES;
+static CGFloat gFontSize = 8.0;
+
+static void NetSpeedApplyLayout(UILabel *label);
+
+static void NetSpeedLoadPreferences(void) {
+	NSUserDefaults *preferences = [[NSUserDefaults alloc] initWithSuiteName:kNetSpeedPreferencesDomain];
+	id enabled = [preferences objectForKey:@"enabled"];
+	id showDownload = [preferences objectForKey:@"showDownload"];
+	id showUpload = [preferences objectForKey:@"showUpload"];
+	id fontSize = [preferences objectForKey:@"fontSize"];
+	gNetSpeedEnabled = enabled == nil ? YES : [enabled boolValue];
+	gShowDownload = showDownload == nil ? YES : [showDownload boolValue];
+	gShowUpload = showUpload == nil ? YES : [showUpload boolValue];
+	gFontSize = fontSize == nil ? 8.0 : MIN(12.0, MAX(6.0, [fontSize doubleValue]));
+	[preferences synchronize];
+}
 
 static uint64_t NetSpeedNow(void) {
 	return (uint64_t)([[NSDate date] timeIntervalSince1970] * 1000000000.0);
@@ -45,75 +68,105 @@ static NSString *NetSpeedFormat(double bytesPerSecond) {
 	return [NSString stringWithFormat:@"%.0fB/s", bytesPerSecond];
 }
 
-static UIView *NetSpeedFindRightmostDisplayableContainer(UIView *root, UIView *coordinateView) {
+static UIView *NetSpeedFindStatusBarRoot(UIView *view) {
+	for (UIView *ancestor = view; ancestor != nil; ancestor = ancestor.superview) {
+		if (ancestor.bounds.size.width >= UIScreen.mainScreen.bounds.size.width * 0.75) return ancestor;
+	}
+	return view;
+}
+
+static UIView *NetSpeedFindClockView(UIView *root) {
 	UIView *best = nil;
-	CGFloat bestMaxX = -CGFLOAT_MAX;
-	for (NSString *className in @[@"STUIStatusBarDisplayableContainerView", @"UIStatusBarDisplayableContainerView", @"_UIStatusBarDisplayableContainerView"]) {
-		Class containerClass = NSClassFromString(className);
-		if (containerClass != Nil && [root isKindOfClass:containerClass] && root.bounds.size.width > 0.0) {
-			CGRect frameInCoordinateView = [root.superview convertRect:root.frame toView:coordinateView];
-			if (CGRectGetMaxX(frameInCoordinateView) > bestMaxX) {
-				best = root;
-				bestMaxX = CGRectGetMaxX(frameInCoordinateView);
-			}
+	CGFloat bestX = CGFLOAT_MAX;
+	NSString *className = NSStringFromClass(root.class);
+	if ([className rangeOfString:@"Time" options:NSCaseInsensitiveSearch].location != NSNotFound &&
+		root.bounds.size.width > 0.0 && root.bounds.size.width < 110.0 && !root.hidden) {
+		best = root;
+		bestX = [root.superview convertRect:root.frame toView:root.window].origin.x;
+	}
+	if ([root isKindOfClass:UILabel.class] && !root.hidden) {
+		NSString *text = ((UILabel *)root).text ?: @"";
+		if ([text rangeOfString:@"^[0-9]{1,2}:[0-9]{2}$" options:NSRegularExpressionSearch].location != NSNotFound) {
+			CGFloat x = [root.superview convertRect:root.frame toView:root.window].origin.x;
+			if (x < bestX) { best = root; bestX = x; }
 		}
 	}
 	for (UIView *subview in root.subviews) {
-		UIView *result = NetSpeedFindRightmostDisplayableContainer(subview, coordinateView);
-		if (result != nil) {
-			CGRect frameInCoordinateView = [result.superview convertRect:result.frame toView:coordinateView];
-			if (CGRectGetMaxX(frameInCoordinateView) > bestMaxX) {
-				best = result;
-				bestMaxX = CGRectGetMaxX(frameInCoordinateView);
-			}
+		UIView *found = NetSpeedFindClockView(subview);
+		if (found != nil) {
+			CGFloat x = [found.superview convertRect:found.frame toView:found.window].origin.x;
+			if (x < bestX) { best = found; bestX = x; }
 		}
 	}
 	return best;
 }
 
-static void NetSpeedLayoutLabel(UIView *container, UILabel *label) {
-	CGRect bounds = container.bounds;
-	CGFloat width = MIN(190.0, MAX(150.0, bounds.size.width * 0.18));
-	CGFloat height = MIN(20.0, MAX(17.0, bounds.size.height - 2.0));
-	CGFloat occupiedRight = bounds.size.width;
-	UIView *rightmostItem = nil;
-	for (UIView *subview in container.subviews) {
-		if (subview == label || subview.hidden) continue;
-		CGRect frame = subview.frame;
-		BOOL isSmallStatusBarItem = frame.size.width > 0.0 && frame.size.width < bounds.size.width * 0.5 && CGRectGetMaxX(frame) > bounds.size.width * 0.55;
-		if (isSmallStatusBarItem && frame.origin.x < occupiedRight) {
-			occupiedRight = frame.origin.x;
-			rightmostItem = subview;
-		}
-	}
-	// Keep clear of the native Wi-Fi, battery and other right-side items.
-	CGFloat x = MAX(4.0, occupiedRight - width - 8.0);
-	label.frame = CGRectMake(x, (bounds.size.height - height) / 2.0, width, height);
-	if (rightmostItem != nil) [container insertSubview:label belowSubview:rightmostItem];
-	else [container addSubview:label];
-}
-
 static void NetSpeedAttachLabel(UIView *statusBar) {
-	UIView *container = NetSpeedFindRightmostDisplayableContainer(statusBar, statusBar);
-	if (container == nil) container = statusBar;
+	UIView *container = NetSpeedFindStatusBarRoot(statusBar);
 	if (container == nil || container.bounds.size.width <= 0.0 || container.bounds.size.height <= 0.0) return;
 	if (gNetSpeedLabels == nil) gNetSpeedLabels = [NSHashTable weakObjectsHashTable];
 	UILabel *label = (UILabel *)[container viewWithTag:0x4E535053];
 	if (label == nil) {
 		label = [[UILabel alloc] initWithFrame:CGRectZero];
 		label.tag = 0x4E535053;
-		label.font = [UIFont monospacedDigitSystemFontOfSize:9.0 weight:UIFontWeightMedium];
+		label.font = [UIFont monospacedDigitSystemFontOfSize:gFontSize weight:UIFontWeightMedium];
 		label.textColor = UIColor.labelColor;
-		label.textAlignment = NSTextAlignmentRight;
+		label.textAlignment = NSTextAlignmentLeft;
+		label.numberOfLines = 2;
 		label.adjustsFontSizeToFitWidth = YES;
-		label.minimumScaleFactor = 0.65;
+		label.minimumScaleFactor = 0.7;
 		label.userInteractionEnabled = NO;
 		label.hidden = YES;
-		label.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin |
-			UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleBottomMargin;
+		label.autoresizingMask = UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleBottomMargin;
+		[container addSubview:label];
 	}
 	[gNetSpeedLabels addObject:label];
-	NetSpeedLayoutLabel(container, label);
+	NetSpeedApplyLayout(label);
+}
+
+static void NetSpeedApplyLayout(UILabel *label) {
+	UIView *container = label.superview;
+	if (container == nil) return;
+	UIView *clock = NetSpeedFindClockView(container);
+	static char originalClockTransformKey;
+	NSValue *savedTransform = clock == nil ? nil : objc_getAssociatedObject(clock, &originalClockTransformKey);
+	if (clock != nil && savedTransform == nil) {
+		savedTransform = [NSValue valueWithCGAffineTransform:clock.transform];
+		objc_setAssociatedObject(clock, &originalClockTransformKey, savedTransform, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+	}
+	if (!gNetSpeedEnabled || (!gShowDownload && !gShowUpload)) {
+		if (clock != nil && savedTransform != nil) clock.transform = savedTransform.CGAffineTransformValue;
+		label.hidden = YES;
+		return;
+	}
+	CGFloat x = 64.0;
+	if (clock != nil && clock.window != nil) {
+		clock.transform = savedTransform.CGAffineTransformValue;
+		CGRect originalClockFrame = [clock.superview convertRect:clock.frame toView:container];
+		x = CGRectGetMaxX(originalClockFrame) - 3.0;
+		clock.transform = CGAffineTransformTranslate(savedTransform.CGAffineTransformValue, -6.0, 0.0);
+	}
+	// iPhone 15 Pro Dynamic Island occupies the center; keep the label in the left status-bar lane.
+	CGFloat islandSafeRight = (container.bounds.size.width - 126.0) / 2.0 - 5.0;
+	CGFloat width = MIN(62.0, MAX(0.0, islandSafeRight - x));
+	if (width < 28.0) {
+		if (clock != nil && savedTransform != nil) clock.transform = savedTransform.CGAffineTransformValue;
+		label.hidden = YES;
+		return;
+	}
+	CGFloat height = MIN(22.0, container.bounds.size.height - 2.0);
+	label.frame = CGRectMake(x, (container.bounds.size.height - height) / 2.0, width, height);
+}
+
+static void NetSpeedPreferencesChanged(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo) {
+	dispatch_async(dispatch_get_main_queue(), ^{
+		NetSpeedLoadPreferences();
+		for (UILabel *label in gNetSpeedLabels.allObjects) {
+			label.font = [UIFont monospacedDigitSystemFontOfSize:gFontSize weight:UIFontWeightMedium];
+			label.hidden = !gNetSpeedEnabled || (!gShowDownload && !gShowUpload);
+			NetSpeedApplyLayout(label);
+		}
+	});
 }
 
 static void NetSpeedStartSampling(void) {
@@ -136,14 +189,16 @@ static void NetSpeedStartSampling(void) {
 		gPreviousSent = sent;
 		gPreviousTimestamp = now;
 
-		NSMutableArray<NSString *> *parts = [NSMutableArray arrayWithCapacity:2];
-		if (currentDownload > 0.0) [parts addObject:[NSString stringWithFormat:@"↓ %@", NetSpeedFormat(gSmoothedDownload)]];
-		if (currentUpload > 0.0) [parts addObject:[NSString stringWithFormat:@"↑ %@", NetSpeedFormat(gSmoothedUpload)]];
-		NSString *text = [parts componentsJoinedByString:@"  "];
+		NSMutableArray<NSString *> *lines = [NSMutableArray arrayWithCapacity:2];
+		if (gShowDownload) [lines addObject:[NSString stringWithFormat:@"↓ %@", NetSpeedFormat(gSmoothedDownload)]];
+		if (gShowUpload) [lines addObject:[NSString stringWithFormat:@"↑ %@", NetSpeedFormat(gSmoothedUpload)]];
+		NSString *text = [lines componentsJoinedByString:@"\n"];
 		dispatch_async(dispatch_get_main_queue(), ^{
 			for (UILabel *label in gNetSpeedLabels.allObjects) {
-				label.hidden = parts.count == 0;
-				if (parts.count > 0) label.text = text;
+				label.font = [UIFont monospacedDigitSystemFontOfSize:gFontSize weight:UIFontWeightMedium];
+				label.hidden = !gNetSpeedEnabled || lines.count == 0;
+				label.text = text;
+				NetSpeedApplyLayout(label);
 			}
 		});
 	});
@@ -220,6 +275,10 @@ static void NetSpeedStartSampling(void) {
 
 - (void)applicationDidFinishLaunching:(UIApplication *)application {
 	%orig;
+	NetSpeedLoadPreferences();
+	CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL,
+		NetSpeedPreferencesChanged, (__bridge CFStringRef)kNetSpeedPreferencesChangedNotification, NULL,
+		CFNotificationSuspensionBehaviorDeliverImmediately);
 	NetSpeedStartSampling();
 }
 
@@ -228,6 +287,7 @@ static void NetSpeedStartSampling(void) {
 %end
 
 %ctor {
+	NetSpeedLoadPreferences();
 	%init(NetSpeedCore);
 	if (NSClassFromString(@"STUIStatusBarForegroundView") != Nil) %init(NetSpeedSTUIStatusBar);
 	if (NSClassFromString(@"STUIStatusBarDisplayableContainerView") != Nil) %init(NetSpeedSTUIDisplayableContainer);

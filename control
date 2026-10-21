@@ -1,9 +1,10 @@
-Package: com.example.netspeedstatus
+Package: com.m9d2.netspeedstatus
 Name: NetSpeedStatus
-Version: 1.3.4
-Architecture: iphoneos-arm64
+Version: 1.4.0
+Architecture: iphoneos-arm64e
 Description: Display real-time upload and download speed in the status bar.
 Maintainer: NetSpeedStatus
 Author: NetSpeedStatus
 Section: Tweaks
-Depends: firmware (>= 15.0)
+Depends: firmware (>= 15.0), preferenceloader, ellekit
+Tag: role::tweak, roothide::compatible

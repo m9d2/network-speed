@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>items</key>
+	<array>
+		<dict>
+			<key>cell</key><string>PSGroupCell</string>
+			<key>label</key><string>状态栏网速</string>
+		</dict>
+		<dict>
+			<key>cell</key><string>PSToggleSwitchSpecifier</string>
+			<key>default</key><true/>
+			<key>defaults</key><string>com.m9d2.netspeedstatus</string>
+			<key>key</key><string>enabled</string>
+			<key>label</key><string>启用网速显示</string>
+		</dict>
+		<dict>
+			<key>cell</key><string>PSToggleSwitchSpecifier</string>
+			<key>default</key><true/>
+			<key>defaults</key><string>com.m9d2.netspeedstatus</string>
+			<key>key</key><string>showDownload</string>
+			<key>label</key><string>显示下载速度</string>
+		</dict>
+		<dict>
+			<key>cell</key><string>PSToggleSwitchSpecifier</string>
+			<key>default</key><true/>
+			<key>defaults</key><string>com.m9d2.netspeedstatus</string>
+			<key>key</key><string>showUpload</string>
+			<key>label</key><string>显示上传速度</string>
+		</dict>
+		<dict>
+			<key>cell</key><string>PSGroupCell</string>
+			<key>label</key><string>外观</string>
+		</dict>
+		<dict>
+			<key>cell</key><string>PSSliderCell</string>
+			<key>default</key><real>8</real>
+			<key>defaults</key><string>com.m9d2.netspeedstatus</string>
+			<key>key</key><string>fontSize</string>
+			<key>label</key><string>字体大小</string>
+			<key>min</key><real>6</real>
+			<key>max</key><real>12</real>
+			<key>showValue</key><true/>
+		</dict>
+	</array>
+	<key>title</key><string>NetSpeedStatus</string>
+</dict>
+</plist>
