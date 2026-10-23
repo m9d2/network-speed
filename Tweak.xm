@@ -16,7 +16,7 @@ static NSString * const kNetSpeedPreferencesChangedNotification = @"com.m9d2.wan
 static BOOL gNetSpeedEnabled = YES;
 static BOOL gShowDownload = YES;
 static BOOL gShowUpload = YES;
-static CGFloat gFontSize = 8.0;
+static CGFloat gFontSize = 9.5;
 
 static void NetSpeedApplyLayout(UILabel *label);
 
@@ -36,7 +36,7 @@ static void NetSpeedLoadPreferences(void) {
 	gNetSpeedEnabled = enabled == nil ? YES : [enabled boolValue];
 	gShowDownload = showDownload == nil ? YES : [showDownload boolValue];
 	gShowUpload = showUpload == nil ? YES : [showUpload boolValue];
-	gFontSize = fontSize == nil ? 8.0 : MIN(12.0, MAX(6.0, [fontSize doubleValue]));
+	gFontSize = fontSize == nil ? 9.5 : MIN(12.0, MAX(8.0, [fontSize doubleValue]));
 	[preferences synchronize];
 }
 
@@ -70,9 +70,9 @@ static void NetSpeedReadCounters(uint64_t *received, uint64_t *sent) {
 
 static NSString *NetSpeedFormat(double bytesPerSecond) {
 	if (!isfinite(bytesPerSecond) || bytesPerSecond < 0.0) bytesPerSecond = 0.0;
-	if (bytesPerSecond >= 1024.0 * 1024.0) return [NSString stringWithFormat:@"%.1fM/s", bytesPerSecond / (1024.0 * 1024.0)];
-	if (bytesPerSecond >= 1024.0) return [NSString stringWithFormat:@"%.1fK/s", bytesPerSecond / 1024.0];
-	return [NSString stringWithFormat:@"%.0fB/s", bytesPerSecond];
+	if (bytesPerSecond >= 1024.0 * 1024.0) return [NSString stringWithFormat:@"%.1fM", bytesPerSecond / (1024.0 * 1024.0)];
+	if (bytesPerSecond >= 1024.0) return [NSString stringWithFormat:@"%.1fK", bytesPerSecond / 1024.0];
+	return [NSString stringWithFormat:@"%.0fB", bytesPerSecond];
 }
 
 static UIView *NetSpeedFindStatusBarRoot(UIView *view) {
@@ -121,7 +121,7 @@ static void NetSpeedAttachLabel(UIView *statusBar) {
 		label.textAlignment = NSTextAlignmentLeft;
 		label.numberOfLines = 2;
 		label.adjustsFontSizeToFitWidth = YES;
-		label.minimumScaleFactor = 0.7;
+		label.minimumScaleFactor = 0.85;
 		label.userInteractionEnabled = NO;
 		label.hidden = YES;
 		label.autoresizingMask = UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleBottomMargin;
@@ -147,16 +147,39 @@ static void NetSpeedApplyLayout(UILabel *label) {
 		return;
 	}
 	CGFloat x = 64.0;
+	CGFloat clockLeft = x;
+	CGFloat clockBandY = CGRectGetMidY(container.bounds);
 	if (clock != nil && clock.window != nil) {
 		clock.transform = savedTransform.CGAffineTransformValue;
 		CGRect originalClockFrame = [clock.superview convertRect:clock.frame toView:container];
-		x = CGRectGetMaxX(originalClockFrame) - 3.0;
-		clock.transform = CGAffineTransformTranslate(savedTransform.CGAffineTransformValue, -6.0, 0.0);
+		clockLeft = CGRectGetMinX(originalClockFrame);
+		clockBandY = CGRectGetMidY(originalClockFrame);
+		x = CGRectGetMaxX(originalClockFrame) + 3.0;
+		clock.transform = CGAffineTransformTranslate(savedTransform.CGAffineTransformValue, -10.0, 0.0);
 	}
 	// iPhone 15 Pro Dynamic Island occupies the center; keep the label in the left status-bar lane.
 	CGFloat islandSafeRight = (container.bounds.size.width - 126.0) / 2.0 - 5.0;
+	// Reserve room for the clock and nearby indicators (such as the silent-mode bell) without relying on private class names.
+	__block CGFloat occupiedRight = x - 3.0;
+	__block void (^scanStatusItems)(UIView *) = ^(UIView *view) {
+		for (UIView *child in view.subviews) {
+			if (child == label || child.hidden || child.alpha < 0.05 || child == clock) continue;
+			if (child.subviews.count == 0) {
+				CGRect frame = [child convertRect:child.bounds toView:container];
+				BOOL inClockBand = fabs(CGRectGetMidY(frame) - clockBandY) < 10.0;
+				BOOL inLeftLane = CGRectGetMaxX(frame) > clockLeft - 2.0 && CGRectGetMinX(frame) < islandSafeRight;
+				if (inClockBand && inLeftLane && frame.size.width > 0.0 && frame.size.width < 40.0) {
+					occupiedRight = MAX(occupiedRight, CGRectGetMaxX(frame));
+				}
+			} else {
+				scanStatusItems(child);
+			}
+		}
+	};
+	scanStatusItems(container);
+	x = MAX(x, occupiedRight + 4.0);
 	CGFloat width = MIN(62.0, MAX(0.0, islandSafeRight - x));
-	if (width < 28.0) {
+	if (width < 22.0) {
 		if (clock != nil && savedTransform != nil) clock.transform = savedTransform.CGAffineTransformValue;
 		label.hidden = YES;
 		return;
@@ -197,8 +220,8 @@ static void NetSpeedStartSampling(void) {
 		gPreviousTimestamp = now;
 
 		NSMutableArray<NSString *> *lines = [NSMutableArray arrayWithCapacity:2];
-		if (gShowDownload) [lines addObject:[NSString stringWithFormat:@"↓ %@", NetSpeedFormat(gSmoothedDownload)]];
-		if (gShowUpload) [lines addObject:[NSString stringWithFormat:@"↑ %@", NetSpeedFormat(gSmoothedUpload)]];
+		if (gShowDownload) [lines addObject:[NSString stringWithFormat:@"↓%@", NetSpeedFormat(gSmoothedDownload)]];
+		if (gShowUpload) [lines addObject:[NSString stringWithFormat:@"↑%@", NetSpeedFormat(gSmoothedUpload)]];
 		NSString *text = [lines componentsJoinedByString:@"\n"];
 		dispatch_async(dispatch_get_main_queue(), ^{
 			for (UILabel *label in gNetSpeedLabels.allObjects) {

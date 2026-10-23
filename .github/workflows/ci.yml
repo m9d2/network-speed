@@ -22,14 +22,18 @@ jobs:
           test -f Makefile
           test -f NetSpeedStatus.plist
           test -f Root.plist
+          test -f Preferences/Info.plist
+          test -f layout/Library/PreferenceLoader/Preferences/NetSpeedStatusPrefs.plist
           test -f control
           test -f Tweak.xm
-          plutil -lint NetSpeedStatus.plist Root.plist
+          plutil -lint NetSpeedStatus.plist Root.plist Preferences/Info.plist layout/Library/PreferenceLoader/Preferences/NetSpeedStatusPrefs.plist
           ruby -e 'require "yaml"; YAML.load_file(".github/workflows/ci.yml")'
           grep -Eq '^THEOS_PACKAGE_SCHEME = roothide$' Makefile
           grep -Eq '^Package: com\.m9d2\.wangsu$' control
           grep -Eq '^Architecture: iphoneos-arm64e$' control
           grep -q 'com.apple.springboard' NetSpeedStatus.plist
+          grep -q '<string>PSLinkCell</string>' layout/Library/PreferenceLoader/Preferences/NetSpeedStatusPrefs.plist
+          grep -q '<string>NSRootListController</string>' layout/Library/PreferenceLoader/Preferences/NetSpeedStatusPrefs.plist
 
       - name: Setup Theos and iOS SDK
         uses: waruhachi/theos-action@v2.4.6

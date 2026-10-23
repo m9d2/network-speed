@@ -35,11 +35,11 @@
 		</dict>
 		<dict>
 			<key>cell</key><string>PSSliderCell</string>
-			<key>default</key><real>8</real>
+			<key>default</key><real>9.5</real>
 			<key>defaults</key><string>com.m9d2.wangsu</string>
 			<key>key</key><string>fontSize</string>
 			<key>label</key><string>字体大小</string>
-			<key>min</key><real>6</real>
+			<key>min</key><real>8</real>
 			<key>max</key><real>12</real>
 			<key>showValue</key><true/>
 		</dict>

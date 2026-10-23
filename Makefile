@@ -18,7 +18,7 @@ NetSpeedStatusPrefs_FILES = Preferences/NSRootListController.m
 NetSpeedStatusPrefs_FRAMEWORKS = UIKit
 NetSpeedStatusPrefs_LDFLAGS = -undefined dynamic_lookup
 NetSpeedStatusPrefs_INSTALL_PATH = /Library/PreferenceBundles
-NetSpeedStatusPrefs_RESOURCE_FILES = Root.plist
+NetSpeedStatusPrefs_RESOURCE_FILES = Root.plist Preferences/Info.plist
 NetSpeedStatusPrefs_CFLAGS = -fobjc-arc
 
 include $(THEOS_MAKE_PATH)/bundle.mk
