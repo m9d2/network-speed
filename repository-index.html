@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f7fb">
+  <meta name="description" content="m9d2 越狱软件源，提供适用于 RootHide 的网速显示插件。">
+  <title>m9d2 软件源</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #172033;
+      --muted: #718096;
+      --line: #e8edf4;
+      --accent: #635bff;
+      --accent-dark: #4e46e5;
+      --surface: rgba(255, 255, 255, .88);
+      --shadow: 0 22px 70px rgba(45, 57, 90, .09);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-width: 320px;
+      background:
+        radial-gradient(ellipse at 16% 0%, rgba(99, 91, 255, .11), transparent 38rem),
+        radial-gradient(ellipse at 90% 20%, rgba(77, 197, 214, .10), transparent 32rem),
+        #f5f7fb;
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { color: inherit; }
+    .page { width: min(960px, calc(100% - 36px)); margin: 0 auto; padding: 30px 0 48px; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 30px; }
+    .brand { display: inline-flex; align-items: center; gap: 11px; text-decoration: none; font-weight: 750; letter-spacing: -.025em; }
+    .brand-mark {
+      display: grid; width: 38px; height: 38px; place-items: center; border-radius: 13px;
+      color: #fff; background: linear-gradient(145deg, #796fff, #4d73e8); box-shadow: 0 7px 16px rgba(99, 91, 255, .24);
+      font-size: 17px; font-weight: 800;
+    }
+    .top-note { color: var(--muted); font-size: 13px; }
+
+    .hero {
+      position: relative; overflow: hidden; padding: clamp(28px, 6vw, 58px); border: 1px solid rgba(255,255,255,.9);
+      border-radius: 28px; background: var(--surface); box-shadow: var(--shadow); backdrop-filter: blur(14px);
+    }
+    .hero::after {
+      position: absolute; top: -140px; right: -96px; width: 340px; height: 340px; border: 1px solid rgba(99,91,255,.10);
+      border-radius: 50%; box-shadow: 0 0 0 35px rgba(99,91,255,.025), 0 0 0 75px rgba(99,91,255,.02); content: ""; pointer-events: none;
+    }
+    .eyebrow { position: relative; z-index: 1; color: var(--accent); font-size: 11px; font-weight: 800; letter-spacing: .16em; }
+    h1 { position: relative; z-index: 1; margin: 14px 0 10px; font-size: clamp(32px, 6vw, 52px); letter-spacing: -.055em; line-height: 1.12; }
+    .intro { position: relative; z-index: 1; max-width: 540px; margin: 0; color: var(--muted); font-size: 15px; line-height: 1.8; }
+    .install-actions { position: relative; z-index: 1; display: flex; flex-wrap: wrap; gap: 11px; margin-top: 27px; }
+    .install-button {
+      display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 48px; padding: 0 17px;
+      border: 1px solid transparent; border-radius: 14px; background: var(--accent); color: #fff; text-decoration: none;
+      font-size: 14px; font-weight: 700; box-shadow: 0 8px 18px rgba(99,91,255,.2); transition: transform .18s ease, background .18s ease;
+    }
+    .install-button:hover { transform: translateY(-2px); background: var(--accent-dark); }
+    .install-button.secondary { border-color: var(--line); background: #fff; color: var(--ink); box-shadow: 0 5px 14px rgba(30,40,70,.05); }
+    .install-button.secondary:hover { background: #f8f9ff; }
+    .app-icon { display: grid; width: 25px; height: 25px; place-items: center; border-radius: 8px; background: rgba(255,255,255,.18); font-size: 13px; font-weight: 800; }
+    .secondary .app-icon { background: #f0efff; color: var(--accent); }
+    .source-row { position: relative; z-index: 1; display: flex; align-items: center; gap: 10px; width: fit-content; max-width: 100%; margin-top: 17px; padding: 7px 8px 7px 13px; border: 1px solid var(--line); border-radius: 11px; background: #fbfcfe; }
+    .source-row code { overflow: hidden; color: #526076; font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; text-overflow: ellipsis; white-space: nowrap; }
+    .copy-button { flex: 0 0 auto; border: 0; border-radius: 7px; padding: 6px 9px; background: #ecebff; color: var(--accent-dark); font: inherit; font-size: 11px; font-weight: 700; cursor: pointer; }
+    .stats { position: relative; z-index: 1; display: flex; flex-wrap: wrap; gap: 23px; margin-top: 26px; padding-top: 21px; border-top: 1px solid var(--line); }
+    .stat { display: flex; align-items: baseline; gap: 8px; color: var(--muted); font-size: 12px; }
+    .stat strong { color: var(--ink); font-size: 15px; }
+
+    .section-heading { display: flex; align-items: end; justify-content: space-between; gap: 12px; margin: 35px 2px 15px; }
+    .section-heading h2 { margin: 0; font-size: 20px; letter-spacing: -.03em; }
+    .section-heading p { margin: 5px 0 0; color: var(--muted); font-size: 12px; }
+    .section-count { border: 1px solid var(--line); border-radius: 99px; padding: 6px 10px; background: rgba(255,255,255,.75); color: var(--muted); font-size: 11px; }
+    .group-label { display: flex; align-items: center; gap: 9px; margin: 20px 3px 11px; color: #46536a; font-size: 13px; font-weight: 750; }
+    .group-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 4px rgba(99,91,255,.10); }
+    .package-card { display: flex; align-items: center; gap: 16px; padding: 18px; border: 1px solid rgba(255,255,255,.95); border-radius: 19px; background: var(--surface); box-shadow: 0 9px 30px rgba(45,57,90,.055); }
+    .package-icon { display: grid; flex: 0 0 52px; width: 52px; height: 52px; place-items: center; border-radius: 16px; background: linear-gradient(145deg, #eef0ff, #e4f6fa); color: var(--accent); font-size: 21px; font-weight: 800; }
+    .package-main { flex: 1; min-width: 0; }
+    .package-title-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    .package-title { margin: 0; font-size: 16px; letter-spacing: -.02em; }
+    .tag { border-radius: 99px; padding: 4px 8px; background: #edf8f4; color: #238367; font-size: 10px; font-weight: 700; }
+    .package-description { margin: 6px 0 0; color: var(--muted); font-size: 12px; line-height: 1.6; }
+    .package-meta { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; }
+    .package-meta span { border: 1px solid var(--line); border-radius: 7px; padding: 4px 7px; color: #748096; font-size: 10px; }
+    .package-version { color: #66748b; font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; white-space: nowrap; }
+    footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; margin-top: 28px; padding: 17px 3px 0; border-top: 1px solid var(--line); color: #8a95a8; font-size: 11px; }
+    footer a { color: #68758b; text-decoration: none; }
+    footer a:hover { color: var(--accent); }
+
+    @media (max-width: 560px) {
+      .page { width: min(100% - 24px, 960px); padding-top: 18px; }
+      .topbar { margin-bottom: 18px; }
+      .top-note { font-size: 11px; }
+      .hero { border-radius: 22px; }
+      .install-actions { display: grid; grid-template-columns: 1fr 1fr; }
+      .install-button { padding: 0 10px; font-size: 12px; }
+      .stats { gap: 13px 20px; }
+      .stat { display: grid; gap: 3px; }
+      .package-card { align-items: flex-start; gap: 12px; padding: 14px; }
+      .package-icon { flex-basis: 44px; width: 44px; height: 44px; border-radius: 14px; }
+      .package-version { padding-top: 3px; font-size: 10px; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; } }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="topbar">
+      <a class="brand" href="./" aria-label="m9d2 软件源首页"><span class="brand-mark">m</span><span>m9d2 软件源</span></a>
+      <span class="top-note">为越狱设备准备的轻量插件</span>
+    </header>
+
+    <section class="hero" aria-labelledby="welcome-title">
+      <div class="eyebrow">M9D2 APT REPOSITORY</div>
+      <h1 id="welcome-title">让好用的插件，<br>一步到位。</h1>
+      <p class="intro">添加 m9d2 软件源，在你常用的包管理器中浏览并安装插件。当前提供 RootHide 兼容的状态栏网速显示。</p>
+
+      <div class="install-actions" aria-label="添加软件源">
+        <a class="install-button" href="sileo://source/https://blog.m9d2.cn/repo/">
+          <span class="app-icon" aria-hidden="true">S</span><span>添加到 Sileo</span>
+        </a>
+        <a class="install-button secondary" href="cydia://url/https://cydia.saurik.com/api/share#?source=https://blog.m9d2.cn/repo/">
+          <span class="app-icon" aria-hidden="true">C</span><span>添加到 Cydia</span>
+        </a>
+      </div>
+
+      <div class="source-row">
+        <code id="source-url">https://blog.m9d2.cn/repo/</code>
+        <button class="copy-button" id="copy-button" type="button">复制地址</button>
+      </div>
+
+      <div class="stats" aria-label="软件源信息">
+        <div class="stat"><strong>__PACKAGE_COUNT__</strong><span>个软件包</span></div>
+        <div class="stat"><strong>2026-10-16 14:54:02</strong><span>更新时间</span></div>
+        <div class="stat"><strong>RootHide</strong><span>兼容环境</span></div>
+      </div>
+    </section>
+
+    <section aria-labelledby="packages-title">
+      <div class="section-heading">
+        <div><h2 id="packages-title">插件目录</h2><p>按用途浏览软件源中的插件</p></div>
+        <span class="section-count">共 __PACKAGE_COUNT__ 个</span>
+      </div>
+
+      <h3 class="group-label"><span class="group-dot" aria-hidden="true"></span>状态栏工具</h3>
+      <article class="package-card">
+        <div class="package-icon" aria-hidden="true">网</div>
+        <div class="package-main">
+          <div class="package-title-row">
+            <h4 class="package-title">网速显示</h4>
+            <span class="tag">RootHide 兼容</span>
+          </div>
+          <p class="package-description">在状态栏实时显示上传与下载速度，支持在系统设置中调整显示与字体选项。</p>
+          <div class="package-meta"><span>iOS 15.0+</span><span>arm64e</span><span>免费</span></div>
+        </div>
+        <span class="package-version">v1.4.2</span>
+      </article>
+    </section>
+
+    <footer>
+      <span>© 2026 m9d2 · 仅供越狱设备使用</span>
+      <a href="https://github.com/m9d2/repo">软件源信息</a>
+    </footer>
+  </main>
+  <script>
+    const copyButton = document.getElementById('copy-button');
+    copyButton.addEventListener('click', async () => {
+      const url = document.getElementById('source-url').textContent;
+      try {
+        await navigator.clipboard.writeText(url);
+        copyButton.textContent = '已复制';
+        window.setTimeout(() => { copyButton.textContent = '复制地址'; }, 1600);
+      } catch {
+        window.prompt('复制软件源地址：', url);
+      }
+    });
+  </script>
+</body>
+</html>
