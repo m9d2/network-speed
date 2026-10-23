@@ -75,6 +75,13 @@ static NSString *NetSpeedFormat(double bytesPerSecond) {
 	return [NSString stringWithFormat:@"%.0fB", bytesPerSecond];
 }
 
+static NSString *NetSpeedCurrentDisplayText(void) {
+	NSMutableArray<NSString *> *lines = [NSMutableArray arrayWithCapacity:2];
+	if (gShowDownload) [lines addObject:[NSString stringWithFormat:@"↓%@", NetSpeedFormat(gSmoothedDownload)]];
+	if (gShowUpload) [lines addObject:[NSString stringWithFormat:@"↑%@", NetSpeedFormat(gSmoothedUpload)]];
+	return [lines componentsJoinedByString:@"\n"];
+}
+
 static UIView *NetSpeedFindStatusBarRoot(UIView *view) {
 	for (UIView *ancestor = view; ancestor != nil; ancestor = ancestor.superview) {
 		if (ancestor.bounds.size.width >= UIScreen.mainScreen.bounds.size.width * 0.75) return ancestor;
@@ -123,7 +130,10 @@ static void NetSpeedAttachLabel(UIView *statusBar) {
 		label.adjustsFontSizeToFitWidth = YES;
 		label.minimumScaleFactor = 0.85;
 		label.userInteractionEnabled = NO;
-		label.hidden = YES;
+		// Status bar containers can be rebuilt during app transitions. Populate the
+		// replacement immediately from the latest sample to avoid a one-second blank.
+		label.text = NetSpeedCurrentDisplayText();
+		label.hidden = !gNetSpeedEnabled || (!gShowDownload && !gShowUpload);
 		label.autoresizingMask = UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleBottomMargin;
 		[container addSubview:label];
 	}
@@ -225,10 +235,7 @@ static void NetSpeedStartSampling(void) {
 		gPreviousSent = sent;
 		gPreviousTimestamp = now;
 
-		NSMutableArray<NSString *> *lines = [NSMutableArray arrayWithCapacity:2];
-		if (gShowDownload) [lines addObject:[NSString stringWithFormat:@"↓%@", NetSpeedFormat(gSmoothedDownload)]];
-		if (gShowUpload) [lines addObject:[NSString stringWithFormat:@"↑%@", NetSpeedFormat(gSmoothedUpload)]];
-		NSString *text = [lines componentsJoinedByString:@"\n"];
+		NSString *text = NetSpeedCurrentDisplayText();
 		dispatch_async(dispatch_get_main_queue(), ^{
 			for (UILabel *label in gNetSpeedLabels.allObjects) {
 				label.font = [UIFont monospacedDigitSystemFontOfSize:gFontSize weight:UIFontWeightMedium];
