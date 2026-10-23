@@ -201,7 +201,9 @@ static void NetSpeedApplyLayout(UILabel *label) {
 		return;
 	}
 	CGFloat height = MIN(22.0, container.bounds.size.height - 2.0);
-	label.frame = CGRectMake(x, (container.bounds.size.height - height) / 2.0, width, height);
+	CGFloat y = clockBandY - height / 2.0;
+	y = MIN(MAX(0.0, y), container.bounds.size.height - height);
+	label.frame = CGRectMake(x, y, width, height);
 }
 
 static void NetSpeedPreferencesChanged(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo) {
