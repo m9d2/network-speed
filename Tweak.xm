@@ -239,7 +239,7 @@ static void NetSpeedStartSampling(void) {
 		dispatch_async(dispatch_get_main_queue(), ^{
 			for (UILabel *label in gNetSpeedLabels.allObjects) {
 				label.font = [UIFont monospacedDigitSystemFontOfSize:gFontSize weight:UIFontWeightMedium];
-				label.hidden = !gNetSpeedEnabled || lines.count == 0;
+				label.hidden = !gNetSpeedEnabled || text.length == 0;
 				label.text = text;
 				NetSpeedApplyLayout(label);
 			}
