@@ -131,6 +131,23 @@ static void NetSpeedAttachLabel(UIView *statusBar) {
 	NetSpeedApplyLayout(label);
 }
 
+static void NetSpeedScanStatusItems(UIView *view, UIView *container, UILabel *label, UIView *clock,
+		CGFloat clockLeft, CGFloat clockBandY, CGFloat safeRight, CGFloat *occupiedRight) {
+	for (UIView *child in view.subviews) {
+		if (child == label || child.hidden || child.alpha < 0.05 || child == clock) continue;
+		if (child.subviews.count == 0) {
+			CGRect frame = [child convertRect:child.bounds toView:container];
+			BOOL inClockBand = fabs(CGRectGetMidY(frame) - clockBandY) < 10.0;
+			BOOL inLeftLane = CGRectGetMaxX(frame) > clockLeft - 2.0 && CGRectGetMinX(frame) < safeRight;
+			if (inClockBand && inLeftLane && frame.size.width > 0.0 && frame.size.width < 40.0) {
+				*occupiedRight = MAX(*occupiedRight, CGRectGetMaxX(frame));
+			}
+		} else {
+			NetSpeedScanStatusItems(child, container, label, clock, clockLeft, clockBandY, safeRight, occupiedRight);
+		}
+	}
+}
+
 static void NetSpeedApplyLayout(UILabel *label) {
 	UIView *container = label.superview;
 	if (container == nil) return;
@@ -160,23 +177,8 @@ static void NetSpeedApplyLayout(UILabel *label) {
 	// iPhone 15 Pro Dynamic Island occupies the center; keep the label in the left status-bar lane.
 	CGFloat islandSafeRight = (container.bounds.size.width - 126.0) / 2.0 - 5.0;
 	// Reserve room for the clock and nearby indicators (such as the silent-mode bell) without relying on private class names.
-	__block CGFloat occupiedRight = x - 3.0;
-	__block void (^scanStatusItems)(UIView *) = ^(UIView *view) {
-		for (UIView *child in view.subviews) {
-			if (child == label || child.hidden || child.alpha < 0.05 || child == clock) continue;
-			if (child.subviews.count == 0) {
-				CGRect frame = [child convertRect:child.bounds toView:container];
-				BOOL inClockBand = fabs(CGRectGetMidY(frame) - clockBandY) < 10.0;
-				BOOL inLeftLane = CGRectGetMaxX(frame) > clockLeft - 2.0 && CGRectGetMinX(frame) < islandSafeRight;
-				if (inClockBand && inLeftLane && frame.size.width > 0.0 && frame.size.width < 40.0) {
-					occupiedRight = MAX(occupiedRight, CGRectGetMaxX(frame));
-				}
-			} else {
-				scanStatusItems(child);
-			}
-		}
-	};
-	scanStatusItems(container);
+	CGFloat occupiedRight = x - 3.0;
+	NetSpeedScanStatusItems(container, container, label, clock, clockLeft, clockBandY, islandSafeRight, &occupiedRight);
 	x = MAX(x, occupiedRight + 4.0);
 	CGFloat width = MIN(62.0, MAX(0.0, islandSafeRight - x));
 	if (width < 22.0) {
