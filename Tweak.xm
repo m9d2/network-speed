@@ -132,18 +132,19 @@ static void NetSpeedAttachLabel(UIView *statusBar) {
 }
 
 static void NetSpeedScanStatusItems(UIView *view, UIView *container, UILabel *label, UIView *clock,
-		CGFloat clockLeft, CGFloat clockBandY, CGFloat safeRight, CGFloat *occupiedRight) {
+		CGFloat clockLeft, CGFloat clockBandY, CGFloat scanLimit, CGFloat safeRight, CGFloat *occupiedRight) {
 	for (UIView *child in view.subviews) {
 		if (child == label || child.hidden || child.alpha < 0.05 || child == clock) continue;
 		if (child.subviews.count == 0) {
 			CGRect frame = [child convertRect:child.bounds toView:container];
 			BOOL inClockBand = fabs(CGRectGetMidY(frame) - clockBandY) < 10.0;
-			BOOL inLeftLane = CGRectGetMaxX(frame) > clockLeft - 2.0 && CGRectGetMinX(frame) < safeRight;
-			if (inClockBand && inLeftLane && frame.size.width > 0.0 && frame.size.width < 40.0) {
+			BOOL immediatelyAfterClock = CGRectGetMaxX(frame) > clockLeft && CGRectGetMinX(frame) < scanLimit;
+			BOOL inLeftLane = CGRectGetMaxX(frame) < safeRight;
+			if (inClockBand && immediatelyAfterClock && inLeftLane && frame.size.width > 0.0 && frame.size.width < 40.0) {
 				*occupiedRight = MAX(*occupiedRight, CGRectGetMaxX(frame));
 			}
 		} else {
-			NetSpeedScanStatusItems(child, container, label, clock, clockLeft, clockBandY, safeRight, occupiedRight);
+			NetSpeedScanStatusItems(child, container, label, clock, clockLeft, clockBandY, scanLimit, safeRight, occupiedRight);
 		}
 	}
 }
@@ -169,17 +170,20 @@ static void NetSpeedApplyLayout(UILabel *label) {
 	if (clock != nil && clock.window != nil) {
 		clock.transform = savedTransform.CGAffineTransformValue;
 		CGRect originalClockFrame = [clock.superview convertRect:clock.frame toView:container];
-		clockLeft = CGRectGetMinX(originalClockFrame);
-		clockBandY = CGRectGetMidY(originalClockFrame);
-		x = CGRectGetMaxX(originalClockFrame) + 3.0;
 		clock.transform = CGAffineTransformTranslate(savedTransform.CGAffineTransformValue, -10.0, 0.0);
+		CGRect visibleClockFrame = [clock.superview convertRect:clock.frame toView:container];
+		clockLeft = CGRectGetMinX(originalClockFrame);
+		clockBandY = CGRectGetMidY(visibleClockFrame);
+		x = CGRectGetMaxX(visibleClockFrame) + 3.0;
 	}
 	// iPhone 15 Pro Dynamic Island occupies the center; keep the label in the left status-bar lane.
 	CGFloat islandSafeRight = (container.bounds.size.width - 126.0) / 2.0 - 5.0;
-	// Reserve room for the clock and nearby indicators (such as the silent-mode bell) without relying on private class names.
-	CGFloat occupiedRight = x - 3.0;
-	NetSpeedScanStatusItems(container, container, label, clock, clockLeft, clockBandY, islandSafeRight, &occupiedRight);
-	x = MAX(x, occupiedRight + 4.0);
+	// Only account for an indicator directly beside the clock (for example, the silent-mode bell).
+	// Ignore Wi-Fi and other later icons so the speed remains close to the time.
+	CGFloat occupiedRight = x;
+	NetSpeedScanStatusItems(container, container, label, clock, clockLeft, clockBandY, x + 17.0,
+		islandSafeRight, &occupiedRight);
+	x = MAX(x, occupiedRight + 3.0);
 	CGFloat width = MIN(62.0, MAX(0.0, islandSafeRight - x));
 	if (width < 22.0) {
 		if (clock != nil && savedTransform != nil) clock.transform = savedTransform.CGAffineTransformValue;

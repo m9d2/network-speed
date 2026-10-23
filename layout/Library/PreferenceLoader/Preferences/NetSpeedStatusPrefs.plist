@@ -8,6 +8,7 @@
 		<key>cell</key><string>PSLinkCell</string>
 		<key>detail</key><string>NSRootListController</string>
 		<key>isController</key><true/>
+		<key>icon</key><string>/Library/PreferenceBundles/NetSpeedStatusPrefs.bundle/icon.png</string>
 		<key>label</key><string>网速显示</string>
 	</dict>
 </dict>
